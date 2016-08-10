@@ -97,9 +97,12 @@ class Model():
         cost= tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.targets))
         optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(cost)
 
+
+        # Evaluate model for accuracy
+        correct_pred = tf.equal(tf.argmax(self.logits,1), tf.argmax(self.targets,1))
+        accuracy= tf.reduce_mean(tf.cast(correct_pred,tf.float32))
+
         
-
-
 
 
 
