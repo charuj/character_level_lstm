@@ -60,23 +60,31 @@ class Model():
 
         # Creating a multi-layer LSTM; the advantage of this is that the number of layers can be changed easily
         self.lstm= lstm= tf.nn.rnn_cell.MultiRNNCell([lstm_cell]*config.num_layers)
-        self.initial_state = lstm.zero_state(batch_size, tf.float32)
+        self.initial_state = lstm.zero_state(batch_size, tf.int32)
 
 
         with tf.variable_scope('lstm-'):
-            ''' The purpose of using variable_scope is to easily share named variables when creating a graph.
-            Instead of manually naming all the variables. This allows for scaling up (i.e. increase num_layers or size)
 
-            see: https://www.tensorflow.org/versions/r0.10/how_tos/variable_scope/index.html
-            '''
+            '''The purpose of using variable_scope is to easily share named variables when creating a graph.
+            #Instead of manually naming all the variables. This allows for scaling up (i.e. increase num_layers or size)
+            #see: https://www.tensorflow.org/versions/r0.10/how_tos/variable_scope/index.htm'''
 
             # Variables created here will be named "lstm-/weights", "lstm-/biases"
 
             # Create variable named 'weights'. Uses an initializer instead of passing the value directly as in tf.Variable
-            weights= tf.get_variable('weights',[args.lstm_size,args.vocab_size], initializer=tf.random_normal_initializer())
+            weights= tf.get_variable('weights',[hidden_size, vocab_size], initializer=tf.random_normal_initializer())
 
             # Create a variable named "biases". Initialize to value of 0
-            biases = tf.get_variable('biases',args.vocab_size, initializer=tf.constant_initializer(0.0))
+            biases = tf.get_variable('biases', vocab_size, initializer=tf.constant_initializer(0.0))
+
+
+            ########TODO: Understand this. Do I really need this to reshape the data? Can I write it as a function instead?
+            embedding = tf.get_variable("embedding", [vocab_size, hidden_size])
+            inputs = tf.split(1, num_steps, tf.nn.embedding_lookup(embedding, self.input_data))
+            inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
+
+            if is_training and config.keep_prob <1:
+                inputs= tf.nn.dropout(inputs, config.keep_prob) # Apply dropout in inputs
 
 
         def data_shape(self, inputs, weights, biases):
