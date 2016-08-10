@@ -22,8 +22,10 @@ The parameters used in this model:
 - num_steps - the number of unrolled steps of LSTM
 - hidden_size - the number of LSTM units
 - max_epoch - the number of epochs trained with the initial learning rate
-- keep_prob - the probability of keeping weights in the dropout layer
+- keep_prob - the probability of keeping weights in the dropout layer. **THIS LSTM USES DROPUT!**
 - batch_size - the batch size
+
+
 
 '''
 
@@ -38,22 +40,27 @@ training_iters=100000
 
 
 class Model():
-    def __init__(self, config):
+    def __init__(self, config, is_training):
         self.batch_size= batch_size= config.batch_size
         self.num_steps= num_steps= config.num_steps
-        size= config.hidden_size
+        hidden_size= config.hidden_size
         vocab_size= config.vocab_size
 
 
         # Create placeholders for inputs and targets
-        self.input_data= tf.placeholder(tf.float32,[args.batch_size, args.seq_length]) #TODO: should data be float or int?
-        self.targets = tf.placeholder(tf.float32,[args.batch_size,args.seq_length])
+        self.input_data= tf.placeholder(tf.int32,[batch_size, num_steps])
+        self.targets = tf.placeholder(tf.int32,[batch_size,num_steps])
 
         # Create multi-layer LSTM cell
-        lstm = rnn_cell.BasicLSTMCell(args.lstm_size)  # size of a single LSTM cell
-        self.lstm = rnn_cell.MultiRNNCell([
-                                              lstm] * args.num_layers)  # creating a multi-layer LSTM; the advantage of this is that the number of layers can be changed easily
-        self.initial_state = lstm.zero_state(args.batch_size, tf.float32)
+        lstm_cell= tf.nn.rnn_cell.BasicLSTMCell(hidden_size) # using default forget_bias=1.0, # TODO: try with forget_bias=0.0
+
+        # Add dropout
+        if is_training and config.keep_prob <1:
+            lstm_cell= tf.nn.rnn_cell.DropoutWrapper(lstm_cell,output_keep_prob=config.keep_prob) #dropout of the outputs based on keep_prob
+
+        # Creating a multi-layer LSTM; the advantage of this is that the number of layers can be changed easily
+        self.lstm= lstm= tf.nn.rnn_cell.MultiRNNCell([lstm_cell]*config.num_layers)
+        self.initial_state = lstm.zero_state(batch_size, tf.float32)
 
 
         with tf.variable_scope('lstm-'):
