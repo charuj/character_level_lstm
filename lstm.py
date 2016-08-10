@@ -13,6 +13,17 @@ Based on:
 https://github.com/hunkim/word-rnn-tensorflow/blob/master/model.py   [I'm not using seq2seq]
 https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/recurrent_network.py
 
+ALSO check out the official Tensorflow PTB tutorial: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/models/rnn/ptb/ptb_word_lm.py
+
+The parameters used in this model:
+
+- learning_rate - the initial value of the learning rate
+- num_layers - the number of LSTM layers
+- num_steps - the number of unrolled steps of LSTM
+- hidden_size - the number of LSTM units
+- max_epoch - the number of epochs trained with the initial learning rate
+- keep_prob - the probability of keeping weights in the dropout layer
+- batch_size - the batch size
 
 '''
 
@@ -27,23 +38,23 @@ training_iters=100000
 
 
 class Model():
-    def __init__(self, args):
-        self.args= args
-        args.batch_size= 50
-        args.lstm_size= 512 # this is the number of nodes per hidden layer
-        args.seq_length= 20 # number of steps to unroll the LSTM
-        args.num_layers= 2
-        args.learning_rate= 0.001
-        args.vocab_size= #todo: how should I represent vocab? 1-Hot?
+    def __init__(self, config):
+        self.batch_size= batch_size= config.batch_size
+        self.num_steps= num_steps= config.num_steps
+        size= config.hidden_size
+        vocab_size= config.vocab_size
 
-        # Create multi-layer LSTM cell
-        lstm= rnn_cell.BasicLSTMCell(args.lstm_size) # size of a single LSTM cell
-        self.lstm= rnn_cell.MultiRNNCell([lstm]*args.num_layers)  # creating a multi-layer LSTM; the advantage of this is that the number of layers can be changed easily
-        self.initial_state= lstm.zero_state(args.batch_size,tf.float32)
 
         # Create placeholders for inputs and targets
         self.input_data= tf.placeholder(tf.float32,[args.batch_size, args.seq_length]) #TODO: should data be float or int?
         self.targets = tf.placeholder(tf.float32,[args.batch_size,args.seq_length])
+
+        # Create multi-layer LSTM cell
+        lstm = rnn_cell.BasicLSTMCell(args.lstm_size)  # size of a single LSTM cell
+        self.lstm = rnn_cell.MultiRNNCell([
+                                              lstm] * args.num_layers)  # creating a multi-layer LSTM; the advantage of this is that the number of layers can be changed easily
+        self.initial_state = lstm.zero_state(args.batch_size, tf.float32)
+
 
         with tf.variable_scope('lstm-'):
             ''' The purpose of using variable_scope is to easily share named variables when creating a graph.
@@ -60,7 +71,23 @@ class Model():
             # Create a variable named "biases". Initialize to value of 0
             biases = tf.get_variable('biases',args.vocab_size, initializer=tf.constant_initializer(0.0))
 
-        
+
+        def data_shape(self, inputs, weights, biases):
+            '''
+            Reshape the data so that it can be used by the LSTM cell.
+            Right now the input data has the shape (batch_size,
+            '''
+
+            #TODO: do I need to split the input into tensors of dimension (batch_size, seq_length)?
+            # TODO: How does splitting the tensors consider 1-hot encoding of the data?
+
+            # I believe the input embeddings are of shape [args.vocab_size, args.lstm_size]
+            # where vocab_size represents the size with 1-hot encoding
+
+
+
+
+
 
 
 
