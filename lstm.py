@@ -102,7 +102,19 @@ class Model():
         correct_pred = tf.equal(tf.argmax(self.logits,1), tf.argmax(self.targets,1))
         accuracy= tf.reduce_mean(tf.cast(correct_pred,tf.float32))
 
-        
+
+class Config(object):
+    """Small config."""
+    init_scale = 0.1
+    learning_rate = 1.0
+    num_layers = 2
+    num_steps = 20
+    hidden_size = 200
+    max_epoch = 4
+    keep_prob = 0.5
+    batch_size = 20
+    vocab_size = ### det vocab size of dataset in terms of characters, alphanumeric + symbols?
+
 
 
 
