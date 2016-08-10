@@ -33,6 +33,7 @@ The parameters used in this model:
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
+from tensorflow.models.rnn import rnn
 
 # Parameters
 
@@ -65,9 +66,9 @@ class Model():
 
         with tf.variable_scope('lstm-'):
 
-            '''The purpose of using variable_scope is to easily share named variables when creating a graph.
-            #Instead of manually naming all the variables. This allows for scaling up (i.e. increase num_layers or size)
-            #see: https://www.tensorflow.org/versions/r0.10/how_tos/variable_scope/index.htm'''
+            '''The purpose of using variable_scope is to easily share named variables when creating a graph,
+            instead of manually naming all the variables. This allows for scaling up (i.e. increase num_layers or size)
+            see: https://www.tensorflow.org/versions/r0.10/how_tos/variable_scope/index.htm'''
 
             # Variables created here will be named "lstm-/weights", "lstm-/biases"
 
@@ -77,30 +78,26 @@ class Model():
             # Create a variable named "biases". Initialize to value of 0
             biases = tf.get_variable('biases', vocab_size, initializer=tf.constant_initializer(0.0))
 
-
-            ########TODO: Understand this. Do I really need this to reshape the data? Can I write it as a function instead?
+            # Character IDs will be embedded into a dense vector representation before being fed into the LSTM
+            # The embedding matrix 'embedding' is a tensor of shape [vocab_size, embedding size]
             embedding = tf.get_variable("embedding", [vocab_size, hidden_size])
-            inputs = tf.split(1, num_steps, tf.nn.embedding_lookup(embedding, self.input_data))
-            inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
+            inputs = tf.nn.embedding_lookup(embedding, self.input_data) #Character embeddings, where input_data =character IDs
 
+            inputs = [tf.squeeze(inputs, [1]) for inputs in tf.split(1, num_steps, inputs)]  # build unrolled LSTM
             if is_training and config.keep_prob <1:
                 inputs= tf.nn.dropout(inputs, config.keep_prob) # Apply dropout in inputs
 
+        outputs, state = rnn.rnn(lstm, inputs, initial_state=self.initial_state)
+        # TODO: May need to reshape the output
 
-        def data_shape(self, inputs, weights, biases):
-            '''
-            Reshape the data so that it can be used by the LSTM cell.
-            Right now the input data has the shape (batch_size,
-            '''
+        self.logits= tf.matmul(outputs, weights) + biases
+        #TODO: do I need self.probs = tf.nn.softmax(self.logits)  ???
 
-            #TODO: do I need to split the input into tensors of dimension (batch_size, seq_length)?
-            # TODO: How does splitting the tensors consider 1-hot encoding of the data?
+        #Define loss and optimizer
+        cost= tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.targets))
+        optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(cost)
 
-            # I believe the input embeddings are of shape [args.vocab_size, args.lstm_size]
-            # where vocab_size represents the size with 1-hot encoding
-
-
-
+        
 
 
 
