@@ -51,9 +51,25 @@ to its number of occurrences, but that seems computationally unncessary.
 letters= string.ascii_lowercase
 digits= string.digits
 puncuation= string.punctuation
-space = ' '
-vocabulary = letters + digits + puncuation + space
-vocabulary_size= len(vocabulary)
+vocabulary = letters + digits + puncuation
+vocabulary_size= len(vocabulary) + 1 # 1 for ' ' space
+first_char= ord(vocabulary[0])  #returns unicode value of first character
+
+def char2id(char, vocabulary):
+    if char in vocabulary:
+        return ord(char) - first_char + 1
+    elif char==' ':
+        return 0
+    else:
+        print 'unexpected character: %s' % char
+        return 0
+
+def id2char(dictid):
+    if dictid > 0:
+        return chr(dictid + first_char - 1)
+    else:
+        return ' '
+
 
 
 
