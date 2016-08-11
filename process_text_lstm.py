@@ -12,7 +12,7 @@ See: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/ud
 '''
 
 import numpy as np
-
+import string
 
 def read_date(filename):
     '''
@@ -39,7 +39,21 @@ def create_sets(data, valid_size):
 
     return valid_set, training_set, train_size
 
+## Map characters to vocabulary IDs and back. Based on Udacity TF
+'''
+NOTE: I could alternatively use the tf tutorial Counter() method to create a dictionary that maps a character
+to its number of occurrences, but that seems computationally unncessary.
 
+'''
+
+#vocabulary_size = len(string.ascii_lowercase) + len(string.digits) + len(string.punctuation) +  1   # [a-z] + [0123456789] + [punctuation] + ' '
+# the vocab takes into account letters, numbers, and puncutation
+letters= string.ascii_lowercase
+digits= string.digits
+puncuation= string.punctuation
+space = ' '
+vocabulary = letters + digits + puncuation + space
+vocabulary_size= len(vocabulary)
 
 
 
