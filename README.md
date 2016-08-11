@@ -3,8 +3,7 @@
 A simple character-level LSTM for generating text. 
 
 Dependencies:
-Numpy 
-Tensorflow 
+Numpy, Tensorflow 
 
 
 Based on:
