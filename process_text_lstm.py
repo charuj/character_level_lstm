@@ -20,10 +20,10 @@ def read_date(filename):
     Returns: data; text written to string.
     '''
 
-    with open('filename.txt', 'r') as myfile:
+    with open(filename, 'r') as myfile:
         data= myfile.read().replace('\n', '') # remove new line. Prevents newlines from being turned into a list
 
-    return data
+    return data.lower()
 
 def create_sets(data, valid_size):
     '''
@@ -55,20 +55,27 @@ vocabulary = letters + digits + puncuation
 vocabulary_size= len(vocabulary) + 1 # 1 for ' ' space
 first_char= ord(vocabulary[0])  #returns unicode value of first character
 
-def char2id(char, vocabulary):
+def char2id(vocabulary, data):
     '''
 
     :param char: character from corpus string
     :param vocabulary: list of characters in vocabulary
     :return: turns a character into an ID corresponding to its UNICODE value
     '''
-    if char in vocabulary:
-        return ord(char) - first_char + 1
-    elif char==' ':
-        return 0
-    else:
-        print 'unexpected character: %s' % char
-        return 0
+
+    list_id=[]
+
+    for char in data:
+
+        if char in vocabulary:
+            id= ord(char) - first_char + 1
+        elif char==' ':
+            id= 0
+        else:
+            print 'unexpected character: %s' % char
+            id= 0
+        list_id.append(id)
+
 
 def id2char(id):
     '''
@@ -115,6 +122,12 @@ def batch_generator(data_as_id, batch_size, num_steps):
         yield (x, y)
 
 
+
+### MAIN ###
+
+data= read_date('nytimes_char_rnn.txt')
+valid_set, training_set, train_size= create_sets(data, 100)
+valid_id= char2id(vocabulary,valid_set)
 
 
 
