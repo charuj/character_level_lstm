@@ -72,21 +72,25 @@ def char2id(vocabulary, data):
         elif char==' ':
             id= 0
         else:
-            print 'unexpected character: %s' % char
+            #print 'unexpected character: %s' % char
             id= 0
         list_id.append(id)
+    return list_id
 
 
-def id2char(id):
+def id2char(list_id):
     '''
 
     :param id: unicode ID of a character, obtained from the function char2id
     :return: the actual character corresponding to the ID
     '''
-    if id > 0:
-        return chr(id + first_char - 1)
-    else:
-        return ' '
+    id2char_readout=[]
+    for id in list_id:
+        if id > 0:
+             id2char_readout.append(chr(id + first_char - 1))
+        else:
+            id2char_readout.append(' ')
+    return id2char_readout
 
 
 def batch_generator(data_as_id, batch_size, num_steps):
@@ -128,7 +132,8 @@ def batch_generator(data_as_id, batch_size, num_steps):
 data= read_date('nytimes_char_rnn.txt')
 valid_set, training_set, train_size= create_sets(data, 100)
 valid_id= char2id(vocabulary,valid_set)
-
+valid_readout = id2char(valid_id)
+print "".join(valid_readout)
 
 
 
