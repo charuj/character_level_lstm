@@ -13,6 +13,7 @@ See: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/ud
 
 import numpy as np
 import string
+import cPickle as pickle
 
 def read_date(filename):
     '''
@@ -107,7 +108,8 @@ def batch_generator(data_as_id, batch_size, num_steps):
     '''
 
 
-    data_as_id= np.array(data_as_id, dtype=np.int32)
+    data_as_id= np.array(data_as_id, dtype=np.int32).reshape([-1,1])
+
     data_len= len(data_as_id)
     batch_len= data_len // batch_size
 
@@ -118,12 +120,13 @@ def batch_generator(data_as_id, batch_size, num_steps):
 
     data = np.zeros([batch_size, batch_len], dtype =np.int32) # create an empty zero matrix to later fill with batches
     for i in range(batch_size):
-        data[i]= data_as_id[batch_len*1: batch_len*(i+1)]
+        data[i]= data_as_id[batch_len*i: batch_len*(i+1)]
 
     for i in range(epoch_size): # TODO: write this with out generator? What shape/ form is it ??
         x = data[:, i * num_steps:(i + 1) * num_steps]
         y = data[:, i * num_steps + 1:(i + 1) * num_steps + 1]
-        yield (x, y)
+
+    return x,y
 
 
 
@@ -132,8 +135,11 @@ def batch_generator(data_as_id, batch_size, num_steps):
 data= read_date('nytimes_char_rnn.txt')
 valid_set, training_set, train_size= create_sets(data, 100)
 valid_id= char2id(vocabulary,valid_set)
-valid_readout = id2char(valid_id)
-print "".join(valid_readout)
+#valid_readout = id2char(valid_id)
+valid_batch_inputs, valid_batch_targets= batch_generator(valid_id,5,10)
+
+pickle.dump( valid_batch, open( "valid_batch.p", "wb" ) )
+
 
 
 
