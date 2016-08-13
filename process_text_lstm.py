@@ -120,7 +120,11 @@ def batch_generator(data_as_id, batch_size, num_steps):
 
     data = np.zeros([batch_size, batch_len], dtype =np.int32) # create an empty zero matrix to later fill with batches
     for i in range(batch_size):
-        data[i]= data_as_id[batch_len*i: batch_len*(i+1)]
+        data_filler=data_as_id[batch_len*i: batch_len*(i+1)]
+        b= np.reshape(data[i],[-1,1])
+        print b.shape
+        b=data_filler
+        data[i]=b
 
     for i in range(epoch_size): # TODO: write this with out generator? What shape/ form is it ??
         x = data[:, i * num_steps:(i + 1) * num_steps]
@@ -135,10 +139,10 @@ def batch_generator(data_as_id, batch_size, num_steps):
 data= read_date('nytimes_char_rnn.txt')
 valid_set, training_set, train_size= create_sets(data, 100)
 valid_id= char2id(vocabulary,valid_set)
-#valid_readout = id2char(valid_id)
-valid_batch_inputs, valid_batch_targets= batch_generator(valid_id,5,10)
 
-pickle.dump( valid_batch, open( "valid_batch.p", "wb" ) )
+valid_batch_inputs, valid_batch_targets= batch_generator(valid_id,5,10)
+valid_readout = id2char(valid_id)
+#pickle.dump( valid_batch, open( "valid_batch.p", "wb" ) )
 
 
 
