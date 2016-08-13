@@ -121,10 +121,11 @@ def batch_generator(data_as_id, batch_size, num_steps):
     data = np.zeros([batch_size, batch_len], dtype =np.int32) # create an empty zero matrix to later fill with batches
     for i in range(batch_size):
         data_filler=data_as_id[batch_len*i: batch_len*(i+1)]
-        b= np.reshape(data[i],[-1,1])
-        print b.shape
-        b=data_filler
-        data[i]=b
+        data[i]= np.reshape(data[i],[1,-1])
+        print data[i].shape
+        data[i]=data_filler
+
+
 
     for i in range(epoch_size): # TODO: write this with out generator? What shape/ form is it ??
         x = data[:, i * num_steps:(i + 1) * num_steps]
