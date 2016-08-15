@@ -147,5 +147,11 @@ valid_readout = id2char(valid_id)
 
 
 
+'''
+TODO: redo batch generation, maybe I don't need to create separate arrays for the inputs and targets
+but can do that in the actual TF Graph
 
+Todo: softmax for prediction ?
+
+'''
 
