@@ -25,15 +25,13 @@ The parameters used in this model:
 - keep_prob - the probability of keeping weights in the dropout layer. **THIS LSTM USES DROPUT!**
 - batch_size - the batch size
 
-
-
 '''
 
-
-import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
 from tensorflow.models.rnn import rnn
+import process_text_lstm
+
 
 # Parameters
 
@@ -53,7 +51,7 @@ class Model():
         self.targets = tf.placeholder(tf.int32,[batch_size,num_steps])
 
         # Create multi-layer LSTM cell
-        lstm_cell= tf.nn.rnn_cell.BasicLSTMCell(hidden_size) # using default forget_bias=1.0, # TODO: try with forget_bias=0.0
+        lstm_cell= tf.nn.rnn_cell.BasicLSTMCell(hidden_size) # using default forget_bias=1.0
 
         # Add dropout
         if is_training and config.keep_prob <1:
@@ -94,26 +92,47 @@ class Model():
         #TODO: do I need self.probs = tf.nn.softmax(self.logits)  ???
 
         #Define loss and optimizer
-        cost= tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.targets))
-        optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(cost)
+        loss= tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.targets))
+        # ^^ The tensorflow tutorial uses seq2seq loss... TODO: see if this works or use seq2seq
 
+        optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(loss)
+        self.final_state= state
 
         # Evaluate model for accuracy
         correct_pred = tf.equal(tf.argmax(self.logits,1), tf.argmax(self.targets,1))
         accuracy= tf.reduce_mean(tf.cast(correct_pred,tf.float32))
 
 
-class Config(object):
+class config(object):
     """Small config."""
     init_scale = 0.1
     learning_rate = 1.0
     num_layers = 2
     num_steps = 20
     hidden_size = 200
-    max_epoch = 4
     keep_prob = 0.5
-    batch_size = 20
+    num_batches=
     vocab_size = ### det vocab size of dataset in terms of characters, alphanumeric + symbols?
+
+
+# Loading the data
+
+# Initializing the variables (this may be redundant since I used get_variable()
+init= tf.initialize_all_variables()
+
+# Launch the graph
+with tf.Session() as sess:
+    sess.run(init)
+    for i in range (num_epochs):
+        state= Model.initial_state
+        for j in range(num_batches):
+            x, y = process_text_lstm.batch_generator(FILL)
+            feed ={Model.input_data:x, Model.targets:y, Model.initial_state:state}
+            
+
+
+
+
 
 
 
