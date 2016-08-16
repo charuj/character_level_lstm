@@ -31,6 +31,7 @@ import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
 from tensorflow.models.rnn import rnn
 import process_text_lstm
+import cPickle as pickle
 
 
 # Parameters
@@ -38,7 +39,7 @@ import process_text_lstm
 training_iters=100000
 
 
-class Model():
+class model():
     def __init__(self, config, is_training):
         self.batch_size= batch_size= config.batch_size
         self.num_steps= num_steps= config.num_steps
@@ -92,15 +93,15 @@ class Model():
         #TODO: do I need self.probs = tf.nn.softmax(self.logits)  ???
 
         #Define loss and optimizer
-        loss= tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.targets))
+        self.loss= tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.targets))
         # ^^ The tensorflow tutorial uses seq2seq loss... TODO: see if this works or use seq2seq
 
-        optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(loss)
+        self.optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(loss)
         self.final_state= state
 
         # Evaluate model for accuracy
-        correct_pred = tf.equal(tf.argmax(self.logits,1), tf.argmax(self.targets,1))
-        accuracy= tf.reduce_mean(tf.cast(correct_pred,tf.float32))
+        self.correct_pred = tf.equal(tf.argmax(self.logits,1), tf.argmax(self.targets,1))
+        self.accuracy= tf.reduce_mean(tf.cast(self.correct_pred,tf.float32))
 
 
 class config(object):
@@ -111,24 +112,52 @@ class config(object):
     num_steps = 20
     hidden_size = 200
     keep_prob = 0.5
-    num_batches=
-    vocab_size = ### det vocab size of dataset in terms of characters, alphanumeric + symbols?
+    display_step= 10
+    num_batches=5
+    num_epochs=
+    vocab_size = len(process_text_lstm.vocabulary) + 1
 
 
-# Loading the data
+# Loading the pickle data
 
-# Initializing the variables (this may be redundant since I used get_variable()
-init= tf.initialize_all_variables()
+trainx = pickle.load( open( "trainx.p", "rb" ) )
+trainy = pickle.load( open( "trainy.p", "rb" ) )
 
-# Launch the graph
-with tf.Session() as sess:
-    sess.run(init)
-    for i in range (num_epochs):
-        state= Model.initial_state
-        for j in range(num_batches):
-            x, y = process_text_lstm.batch_generator(FILL)
-            feed ={Model.input_data:x, Model.targets:y, Model.initial_state:state}
-            
+
+validx = pickle.load( open( "validx.p", "rb" ) )
+validy = pickle.load( open( "validy.p", "rb" ) )
+
+
+def train(config, model, trainx, trainy):
+    # Initializing the variables (this may be redundant since I used get_variable()
+    init= tf.initialize_all_variables()
+
+    # Launch the graph
+    with tf.Session() as sess:
+        sess.run(init)
+        step=1
+        for i in range (config.num_epochs):
+            state= model.initial_state.eval()
+            for j in range(config.num_batches):
+                # the data is already shaped to account for batches.
+                # data is in the shape [num_batches, num_unrollings]
+                # therefore, loop over the rows of the input and target matrices
+                x = trainx[j, :]
+                y= trainy[j,:]
+                feed = {model.input_data: x, model.targets:y, model.initial_state:state}
+                train_loss, state, _, accuracy = sess.run([model.loss, model.final_state, model.optimizer, model.accuracy],feed_dict=feed )
+                if step % config.display_step ==0:
+                    print "Training loss= " + train_loss
+                    print 'Accuracy= ' + accuracy
+                step +=1
+        print "Optimization Finished"
+
+
+
+    # Calculate accuracy on validation set
+    valid_accuracy = sess.run(model.accuracy, feed_dict={model.input_data: validx, model.targets: validy})
+    print "Validation accuracy = " + valid_accuracy
+
 
 
 
