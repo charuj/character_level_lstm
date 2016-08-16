@@ -97,41 +97,27 @@ def id2char(list_id):
 def batch_generator(data_as_id, batch_size, num_steps):
     '''
 
-    Generates batches of the data and allows for minibatch iterations.
-    This function is based on the function 'ptb_iterator' in the tensorflow PTB tutorial.
+        Generates batches of the data and allows for minibatch iterations.
+        This function is based on the function 'ptb_iterator' in the tensorflow PTB tutorial.
 
-    :param data: string of data in ID format (i.e. either the validation or training set).
-    :param batch_size: int, the batch size
-    :param num_steps: int, number of unrolls in the LSTM. Should be the same as in config.num_steps in the file lstm.py
-    :return: pairs of batched data in matrix of shape [batch_size, num_steps].
-            The first set of batched data is the inputs, the second is the targets (time-shifted to the right by one).
+        :param data: string of data in ID format (i.e. either the validation or training set).
+        :param batch_size: int, the batch size
+        :param num_steps: int, number of unrolls in the LSTM. Should be the same as in config.num_steps in the file lstm.py
+        :return: pairs of batched data in matrix of shape [batch_size, num_steps].
+                The first set of batched data is the inputs, the second is the targets (time-shifted to the right by one).
     '''
 
 
-    data_as_id= np.array(data_as_id, dtype=np.int32).reshape([-1,1])
-
+    data_as_id= np.array(data_as_id, dtype=np.int32)
     data_len= len(data_as_id)
     batch_len= data_len // batch_size
-
-    # batch size check, to see if it needs to be adjusted
-    epoch_size= (batch_len -1) // num_steps
-    if epoch_size ==0:
-        raise ValueError("Epoch size = 0; decrease batch_size or num_steps")
-
-    data = np.zeros([batch_size, batch_len], dtype =np.int32) # create an empty zero matrix to later fill with batches
+    data= np.zeros([batch_size, batch_len], dtype=np.int32) # create an empty matrix, where each row will be a batch (batch_size x batch_len)
     for i in range(batch_size):
-        data_filler=data_as_id[batch_len*i: batch_len*(i+1)]
-        data[i]= np.reshape(data[i],[1,-1])
-        print data[i].shape
-        data[i]=data_filler
+        data[i]= data_as_id[batch_len * i: batch_len * (i+1)] # populate the data array, where each row is a batch
+
+    return data
 
 
-
-    for i in range(epoch_size): # TODO: write this with out generator? What shape/ form is it ??
-        x = data[:, i * num_steps:(i + 1) * num_steps]
-        y = data[:, i * num_steps + 1:(i + 1) * num_steps + 1]
-
-    return x,y
 
 
 
@@ -141,7 +127,8 @@ data= read_date('nytimes_char_rnn.txt')
 valid_set, training_set, train_size= create_sets(data, 100)
 valid_id= char2id(vocabulary,valid_set)
 
-valid_batch_inputs, valid_batch_targets= batch_generator(valid_id,5,10)
+valid_batch= batch_generator(valid_id,5,10)
+print valid_batch
 valid_readout = id2char(valid_id)
 #pickle.dump( valid_batch, open( "valid_batch.p", "wb" ) )
 
