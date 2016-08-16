@@ -94,7 +94,7 @@ def id2char(list_id):
     return id2char_readout
 
 
-def batch_generator(data_as_id, batch_size, num_steps):
+def batch_generator(data_as_id, batch_size, num_unrollings):
     '''
 
         Generates batches of the data and allows for minibatch iterations.
@@ -115,9 +115,17 @@ def batch_generator(data_as_id, batch_size, num_steps):
     for i in range(batch_size):
         data[i]= data_as_id[batch_len * i: batch_len * (i+1)] # populate the data array, where each row is a batch
 
-    return data
+    epoch_size= (batch_len -1)//num_unrollings  # the number of time that num_unrollings fits into the big data matrix
+    if epoch_size == 0:
+        raise ValueError("epoch_size == 0, decrease batch_size or num_steps")
+
+    # Making array that is shape [batch_size, num_unrollings].
+    for i in range(epoch_size):
+        x = data[:, i * num_unrollings:(i + 1) * num_unrollings] # inputs
+        y = data[:, i* num_unrollings + 1: (i+1)*num_unrollings+1] # targets
 
 
+    return x, y
 
 
 
@@ -127,8 +135,7 @@ data= read_date('nytimes_char_rnn.txt')
 valid_set, training_set, train_size= create_sets(data, 100)
 valid_id= char2id(vocabulary,valid_set)
 
-valid_batch= batch_generator(valid_id,5,10)
-print valid_batch
+valid_batchX, y = batch_generator(valid_id,5,10)
 valid_readout = id2char(valid_id)
 #pickle.dump( valid_batch, open( "valid_batch.p", "wb" ) )
 
