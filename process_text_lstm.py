@@ -94,7 +94,7 @@ def id2char(list_id):
     return id2char_readout
 
 
-def batch_generator(data_as_id, batch_size, num_unrollings):
+def batch_generator(data_as_id, num_batches,  num_unrollings):
     '''
 
         Generates batches of the data and allows for minibatch iterations.
@@ -110,22 +110,20 @@ def batch_generator(data_as_id, batch_size, num_unrollings):
 
     data_as_id= np.array(data_as_id, dtype=np.int32)
     data_len= len(data_as_id)
-    batch_len= data_len // batch_size
-    data= np.zeros([batch_size, batch_len], dtype=np.int32) # create an empty matrix, where each row will be a batch (batch_size x batch_len)
-    for i in range(batch_size):
+    batch_len= data_len // num_batches
+    data= np.zeros([num_batches, batch_len], dtype=np.int32) # create an empty matrix, where each row will be a batch (batch_size x batch_len)
+    for i in range(num_batches):
         data[i]= data_as_id[batch_len * i: batch_len * (i+1)] # populate the data array, where each row is a batch
 
-    epoch_size= (batch_len -1)//num_unrollings  # the number of time that num_unrollings fits into the big data matrix
-    if epoch_size == 0:
+    num_epochs= (batch_len -1)//num_unrollings  # the number of time that num_unrollings fits into the big data matrix
+    if num_epochs == 0:
         raise ValueError("epoch_size == 0, decrease batch_size or num_steps")
 
     # Making array that is shape [batch_size, num_unrollings].
-    for i in range(epoch_size):
+    for i in range(num_epochs):
         x = data[:, i * num_unrollings:(i + 1) * num_unrollings] # inputs
         y = data[:, i* num_unrollings + 1: (i+1)*num_unrollings+1] # targets
-
-
-    return x, y
+    return  x, y
 
 
 
@@ -134,18 +132,18 @@ def batch_generator(data_as_id, batch_size, num_unrollings):
 data= read_date('nytimes_char_rnn.txt')
 valid_set, training_set, train_size= create_sets(data, 100)
 valid_id= char2id(vocabulary,valid_set)
+training_id= char2id(vocabulary, training_set)
+# put training and validation IDs into pickle files
+pickle.dump(valid_id, open( "valid_id.p", "wb" ) )
+pickle.dump(training_id, open( "train_id.p", "wb" ) )
 
-valid_batchX, y = batch_generator(valid_id,5,10)
-valid_readout = id2char(valid_id)
-#pickle.dump( valid_batch, open( "valid_batch.p", "wb" ) )
+# Make and pickle validation batches
+validx, validy = batch_generator(valid_id,5,10)
+pickle.dump(validx, open( "validx.p", "wb" ) )
+pickle.dump(validy, open( "validy.p", "wb" ) )
 
-
-
-'''
-TODO: redo batch generation, maybe I don't need to create separate arrays for the inputs and targets
-but can do that in the actual TF Graph
-
-Todo: softmax for prediction ?
-
-'''
+# Make and pickle training batches
+trainx, trainy= batch_generator(training_id,5,10)
+pickle.dump(trainx, open( "trainx.p", "wb" ) )
+pickle.dump(trainy, open( "trainy.p", "wb" ) )
 
