@@ -96,7 +96,7 @@ class model():
         self.loss= tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.logits, self.targets))
         # ^^ The tensorflow tutorial uses seq2seq loss... TODO: see if this works or use seq2seq
 
-        self.optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(loss)
+        self.optimizer= tf.train.AdamOptimizer(learning_rate= config.learning_rate).minimize(self.loss)
         self.final_state= state
 
         # Evaluate model for accuracy
@@ -114,7 +114,8 @@ class config(object):
     keep_prob = 0.5
     display_step= 10
     num_batches=5
-    num_epochs=
+    num_unrollings = 10
+    #num_epochs= process_text_lstm.num_epochs
     vocab_size = len(process_text_lstm.vocabulary) + 1
 
 
@@ -128,15 +129,18 @@ validx = pickle.load( open( "validx.p", "rb" ) )
 validy = pickle.load( open( "validy.p", "rb" ) )
 
 
-def train(config, model, trainx, trainy):
+def main(config, model, trainx, trainy, validx, validy):
     # Initializing the variables (this may be redundant since I used get_variable()
     init= tf.initialize_all_variables()
+    data_len= len(trainx)
+    batch_len = data_len // config.num_batches
+    num_epochs=(batch_len -1)//config.num_unrollings
 
     # Launch the graph
     with tf.Session() as sess:
         sess.run(init)
         step=1
-        for i in range (config.num_epochs):
+        for i in range (num_epochs):
             state= model.initial_state.eval()
             for j in range(config.num_batches):
                 # the data is already shaped to account for batches.
@@ -152,11 +156,15 @@ def train(config, model, trainx, trainy):
                 step +=1
         print "Optimization Finished"
 
-
-
-    # Calculate accuracy on validation set
+    #Calculate accuracy on validation set
     valid_accuracy = sess.run(model.accuracy, feed_dict={model.input_data: validx, model.targets: validy})
     print "Validation accuracy = " + valid_accuracy
+
+
+## MAIN ###
+main(config, model, trainx, trainy, validx, validy)
+
+
 
 
 
