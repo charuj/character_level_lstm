@@ -15,6 +15,13 @@ import numpy as np
 import string
 import cPickle as pickle
 
+
+# Parameters
+batch_size= 5
+num_unrollings = 10
+valid_size= 100
+
+
 def read_date(filename):
     '''
     filename: textfile containing corpus.
@@ -89,8 +96,6 @@ def one_hot(data, vocabulary, vocabulary_size):
 
 
 
-
-
 def batch_generator(data_as_id, num_batches,  num_unrollings):
     '''
 
@@ -127,24 +132,26 @@ def batch_generator(data_as_id, num_batches,  num_unrollings):
 ### MAIN ###
 
 data= read_date('nytimes_char_rnn.txt')
-valid_set, training_set, train_size= create_sets(data, 100)
-one_hot_matrix= one_hot(valid_set, vocabulary,vocabulary_size)
+valid_set, training_set, train_size= create_sets(data, valid_size)
+valid_1hot= one_hot(valid_set, vocabulary,vocabulary_size)
+train_1hot= one_hot(training_set, vocabulary, vocabulary_size)
 
-valid_id= char2id(vocabulary,valid_set)
-training_id= char2id(vocabulary, training_set)
-# put training and validation IDs into pickle files
-pickle.dump(valid_id, open( "valid_id.p", "wb" ) )
-pickle.dump(training_id, open( "train_id.p", "wb" ) )
+
+# put training and validation 1hots into pickle files
+pickle.dump(valid_1hot, open( "valid_1hot.p", "wb" ) )
+pickle.dump(train_1hot, open( "train_1hot.p", "wb" ) )
 
 # Make and pickle validation batches
-validx, validy = batch_generator(valid_id,5,10)
+validx, validy = batch_generator(valid_1hot,batch_size,num_unrollings) # batch_size = 5, num_unrollings = 10 (this should match lstm file )
 pickle.dump(validx, open( "validx.p", "wb" ) )
 pickle.dump(validy, open( "validy.p", "wb" ) )
 
 # Make and pickle training batches
-trainx, trainy= batch_generator(training_id,5,10)
+trainx, trainy= batch_generator(train_1hot,batch_size,num_unrollings)
 pickle.dump(trainx, open( "trainx.p", "wb" ) )
 pickle.dump(trainy, open( "trainy.p", "wb" ) )
+
+
 
 
 
