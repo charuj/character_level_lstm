@@ -94,6 +94,7 @@ class model():
         outputs, state = rnn.rnn(lstm, inputs, initial_state=self.initial_state)
         outputs= tf.reshape(tf.concat(1,outputs), [-1, config.num_unrollings,config.hidden_size])
 
+
         # TODO: May need to reshape the output
         self.logits= tf.batch_matmul(outputs,weights) + biases
        # self.logits= tf.matmul(outputs, weights) + biases
@@ -117,7 +118,7 @@ class config(object):
     init_scale = 0.1
     learning_rate = 1.0
     num_layers = 2
-    num_steps = 20
+    num_steps = 10
     hidden_size = 200
     keep_prob = 0.5
     display_step= 10
@@ -178,8 +179,9 @@ main(config, model, trainx, trainy, validx, validy)
 
 
 
-
-
+# TODO: change data (make one hot encoding instead of char2id )
+# TODO: change numpy (outside of graph, feed_dict) into one hot, and graph (inputs and targets placeholders)
+# dimension of data will now be 5 x 69 x 10
 
 
 
