@@ -96,37 +96,69 @@ def one_hot(data, vocabulary, vocabulary_size):
 
 
 
-def batch_generator(data_as_id, num_batches,  num_unrollings):
+def batch_generator(data_1hot, batch_size, num_unrollings, vocabulary_size):
     '''
 
         Generates batches of the data and allows for minibatch iterations.
         This function is based on the function 'ptb_iterator' in the tensorflow PTB tutorial.
 
-        :param data: string of data in ID format (i.e. either the validation or training set).
+        :param data_1hot: array of data as 1-hot encodings, dims vocabulary_size x data_len
         :param batch_size: int, the batch size
-        :param num_steps: int, number of unrolls in the LSTM. Should be the same as in config.num_steps in the file lstm.py
-        :return: pairs of batched data in matrix of shape [batch_size, num_steps].
+        :param num_unrollings: int, number of unrolls in the LSTM. Should be the same as in config.num_steps in the file lstm.py
+        :return: Two 3D arrays  of batched data.
+                Dimension = batch_len x vocabulary_size x num_unrollings
                 The first set of batched data is the inputs, the second is the targets (time-shifted to the right by one).
     '''
 
+    data_len= len(data_1hot[0])  # number of columns
+    batch_len= data_len // batch_size
+    # data= np.zeros([batch_size,vocabulary_size, num_unrollings])
+    input_array_list= []
+    target_array_list= []
 
-    data_as_id= np.array(data_as_id, dtype=np.int32)
-    data_len= len(data_as_id)
-    batch_len= data_len // num_batches
-    data= np.zeros([num_batches, batch_len], dtype=np.int32) # create an empty matrix, where each row will be a batch (batch_size x batch_len)
-    for i in range(num_batches):
-        data[i]= data_as_id[batch_len * i: batch_len * (i+1)] # populate the data array, where each row is a batch
+    # Make a list of arrays for the inputs and targets, where each element of the list is of dim vocab_size x num_unrollings
+    for i in range(batch_len):
+        input_array = data_1hot[i*num_unrollings: (i+1) * num_unrollings]
+        target_array = data_1hot[i*num_unrollings + 1 : (i+1) * num_unrollings + 1]
+        input_array_list.append(input_array)
+        target_array_list.append(target_array)
 
-    num_epochs= (batch_len -1)//num_unrollings  # the number of time that num_unrollings fits into the big data matrix
-    if num_epochs == 0:
-        raise ValueError("epoch_size == 0, decrease batch_size or num_steps")
 
-    # Making array that is shape [batch_size, num_unrollings].
-    for i in range(num_epochs):
-        x = data[:, i * num_unrollings:(i + 1) * num_unrollings] # inputs
-        y = data[:, i* num_unrollings + 1: (i+1)*num_unrollings+1] # targets
-    return  x, y
+    stacked= np.concatenate(input_array_list, axis=0)
 
+    # Stack the above-created arrays; dim = vocab_size x num_unrollings x batch_len
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #
+    #
+    # #data= np.zeros([batch_size, batch_len], dtype=np.int32) # create an empty matrix, where each row will be a batch (batch_size x batch_len)
+    # for i in range(batch_size):
+    #
+    #     data[i]= data_as_id[batch_len * i: batch_len * (i+1)] # populate the data array, where each row is a batch
+    #
+    # num_epochs= (batch_len -1)//num_unrollings  # the number of time that num_unrollings fits into the big data matrix
+    # if num_epochs == 0:
+    #     raise ValueError("epoch_size == 0, decrease batch_size or num_steps")
+    #
+    # # Making array that is shape [batch_size, num_unrollings].
+    # for i in range(num_epochs):
+    #     x = data[:, i * num_unrollings:(i + 1) * num_unrollings] # inputs
+    #     y = data[:, i* num_unrollings + 1: (i+1)*num_unrollings+1] # targets
+    # return  x, y
+    #
 
 
 ### MAIN ###
@@ -141,18 +173,23 @@ train_1hot= one_hot(training_set, vocabulary, vocabulary_size)
 pickle.dump(valid_1hot, open( "valid_1hot.p", "wb" ) )
 pickle.dump(train_1hot, open( "train_1hot.p", "wb" ) )
 
-# Make and pickle validation batches
-validx, validy = batch_generator(valid_1hot,batch_size,num_unrollings) # batch_size = 5, num_unrollings = 10 (this should match lstm file )
-pickle.dump(validx, open( "validx.p", "wb" ) )
-pickle.dump(validy, open( "validy.p", "wb" ) )
 
-# Make and pickle training batches
-trainx, trainy= batch_generator(train_1hot,batch_size,num_unrollings)
-pickle.dump(trainx, open( "trainx.p", "wb" ) )
-pickle.dump(trainy, open( "trainy.p", "wb" ) )
+valid_batch_input = batch_generator(valid_1hot,batch_size,num_unrollings,vocabulary_size)
 
 
-
+#
+# # Make and pickle validation batches
+# validx, validy = batch_generator(valid_1hot,batch_size,num_unrollings) # batch_size = 5, num_unrollings = 10 (this should match lstm file )
+# pickle.dump(validx, open( "validx.p", "wb" ) )
+# pickle.dump(validy, open( "validy.p", "wb" ) )
+#
+# # Make and pickle training batches
+# trainx, trainy= batch_generator(train_1hot,batch_size,num_unrollings)
+# pickle.dump(trainx, open( "trainx.p", "wb" ) )
+# pickle.dump(trainy, open( "trainy.p", "wb" ) )
+#
+#
+#
 
 
 
