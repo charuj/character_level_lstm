@@ -52,46 +52,43 @@ to its number of occurrences, but that seems computationally unncessary.
 letters= string.ascii_lowercase
 digits= string.digits
 puncuation= string.punctuation
-vocabulary = letters + digits + puncuation
-vocabulary_size= len(vocabulary) + 1 # 1 for ' ' space
+vocabulary = " " + letters + digits + puncuation  # space is index 0
+print vocabulary
+vocabulary_size= len(vocabulary)
+print vocabulary_size
 first_char= ord(vocabulary[0])  #returns unicode value of first character
 
-def char2id(vocabulary, data):
+
+def one_hot(data, vocabulary, vocabulary_size):
     '''
 
-    :param char: character from corpus string
-    :param vocabulary: list of characters in vocabulary
-    :return: turns a character into an ID corresponding to its UNICODE value
+    :param data: string of characters that needs to be converted into 1-hot encoding
+    :param vocabulary_size: number of characters in the vocabulary
+            vocabulary: string of characters that are in the vocabulary
+    :return: data matrix as 1-hot encoding
     '''
 
-    list_id=[]
-
-    for char in data:
-
-        if char in vocabulary:
-            id= ord(char) - first_char + 1
-        elif char==' ':
-            id= 0
+    # First: define what's needed for the columns, that is create an array of numbers, where each number represents the index of the character in the vocabulary
+    data_len= len(data)
+    list_indexes = []
+    for i in range(data_len):
+        if data[i] in vocabulary:
+            index_value= vocabulary.index(data[i])
         else:
-            #print 'unexpected character: %s' % char
-            id= 0
-        list_id.append(id)
-    return list_id
+            index_value = 0
+        list_indexes.append(index_value)
+
+    matrix_indexes = np.asarray(list_indexes) # convert the above-createdlist of indexes to an array
+
+    #2nd: create zero matrix and fill
+    one_hot_matrix= np.zeros([vocabulary_size, len(matrix_indexes)])
+    for i in range(len(matrix_indexes)):
+        one_hot_matrix[matrix_indexes[i],i] = 1
+
+    return one_hot_matrix
 
 
-def id2char(list_id):
-    '''
 
-    :param id: unicode ID of a character, obtained from the function char2id
-    :return: the actual character corresponding to the ID
-    '''
-    id2char_readout=[]
-    for id in list_id:
-        if id > 0:
-             id2char_readout.append(chr(id + first_char - 1))
-        else:
-            id2char_readout.append(' ')
-    return id2char_readout
 
 
 def batch_generator(data_as_id, num_batches,  num_unrollings):
@@ -131,6 +128,8 @@ def batch_generator(data_as_id, num_batches,  num_unrollings):
 
 data= read_date('nytimes_char_rnn.txt')
 valid_set, training_set, train_size= create_sets(data, 100)
+one_hot_matrix= one_hot(valid_set, vocabulary,vocabulary_size)
+
 valid_id= char2id(vocabulary,valid_set)
 training_id= char2id(vocabulary, training_set)
 # put training and validation IDs into pickle files
@@ -147,3 +146,51 @@ trainx, trainy= batch_generator(training_id,5,10)
 pickle.dump(trainx, open( "trainx.p", "wb" ) )
 pickle.dump(trainy, open( "trainy.p", "wb" ) )
 
+
+
+
+
+
+#### APENDIX (CODE I NO LONGER NEED BUT WORKS) #####
+
+'''
+
+Instead of convering characters to IDs, I convert them to one-hot encoding based on the size of the vocabulary (69)
+
+def char2id(vocabulary, data):
+
+
+    # :param char: character from corpus string
+    # :param vocabulary: list of characters in vocabulary
+    # :return: turns a character into an ID corresponding to its UNICODE value
+
+
+    list_id=[]
+
+    for char in data:
+
+        if char in vocabulary:
+            id= ord(char) - first_char + 1
+        elif char==' ':
+            id= 0
+        else:
+            #print 'unexpected character: %s' % char
+            id= 0
+        list_id.append(id)
+    return list_id
+
+
+def id2char(list_id):
+
+    #
+    # :param id: unicode ID of a character, obtained from the function char2id
+    # :return: the actual character corresponding to the ID
+
+    id2char_readout=[]
+    for id in list_id:
+        if id > 0:
+             id2char_readout.append(chr(id + first_char - 1))
+        else:
+            id2char_readout.append(' ')
+    return id2char_readout
+'''
