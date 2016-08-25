@@ -112,23 +112,18 @@ def batch_generator(data_1hot, batch_size, num_unrollings, vocabulary_size):
 
     data_len= len(data_1hot[0])  # number of columns
     batch_len= data_len // batch_size
-    # data= np.zeros([batch_size,vocabulary_size, num_unrollings])
-    input_array_list= []
-    target_array_list= []
 
     # Make a list of arrays for the inputs and targets, where each element of the list is of dim vocab_size x num_unrollings
     for i in range(batch_len):
-        input_array = data_1hot[i*num_unrollings: (i+1) * num_unrollings]
-        target_array = data_1hot[i*num_unrollings + 1 : (i+1) * num_unrollings + 1]
-        input_array_list.append(input_array)
-        target_array_list.append(target_array)
+        input_array = data_1hot[:,i*num_unrollings: (i+1) * num_unrollings]
+        target_array = data_1hot[:, i*num_unrollings + 1 : (i+1) * num_unrollings + 1]
+        input_stacked= np.dstack(input_array)
+        target_stacked= np.dstack(target_array)
 
-
-    stacked= np.concatenate(input_array_list, axis=0)
 
     # Stack the above-created arrays; dim = vocab_size x num_unrollings x batch_len
 
-
+    return input_stacked, target_stacked
 
 
 
