@@ -111,49 +111,22 @@ def batch_generator(data_1hot, batch_size, num_unrollings, vocabulary_size):
     '''
 
     data_len= len(data_1hot[0])  # number of columns
-    batch_len= data_len // batch_size
+    batch_len= data_len // num_unrollings
+    input_stack = []
 
     # Make a list of arrays for the inputs and targets, where each element of the list is of dim vocab_size x num_unrollings
     for i in range(batch_len):
-        input_array = data_1hot[:,i*num_unrollings: (i+1) * num_unrollings]
+        input_array = data_1hot[:, i*num_unrollings: (i+1) * num_unrollings]
+        input_stack.append(input_array)
         target_array = data_1hot[:, i*num_unrollings + 1 : (i+1) * num_unrollings + 1]
         input_stacked= np.dstack(input_array)
         target_stacked= np.dstack(target_array)
 
-
+    np.dstack((input_stack[0], input_stack[1]))
     # Stack the above-created arrays; dim = vocab_size x num_unrollings x batch_len
 
     return input_stacked, target_stacked
 
-
-
-
-
-
-
-
-
-
-
-
-
-    #
-    #
-    # #data= np.zeros([batch_size, batch_len], dtype=np.int32) # create an empty matrix, where each row will be a batch (batch_size x batch_len)
-    # for i in range(batch_size):
-    #
-    #     data[i]= data_as_id[batch_len * i: batch_len * (i+1)] # populate the data array, where each row is a batch
-    #
-    # num_epochs= (batch_len -1)//num_unrollings  # the number of time that num_unrollings fits into the big data matrix
-    # if num_epochs == 0:
-    #     raise ValueError("epoch_size == 0, decrease batch_size or num_steps")
-    #
-    # # Making array that is shape [batch_size, num_unrollings].
-    # for i in range(num_epochs):
-    #     x = data[:, i * num_unrollings:(i + 1) * num_unrollings] # inputs
-    #     y = data[:, i* num_unrollings + 1: (i+1)*num_unrollings+1] # targets
-    # return  x, y
-    #
 
 
 ### MAIN ###
@@ -169,9 +142,9 @@ pickle.dump(valid_1hot, open( "valid_1hot.p", "wb" ) )
 pickle.dump(train_1hot, open( "train_1hot.p", "wb" ) )
 
 
-valid_batch_input = batch_generator(valid_1hot,batch_size,num_unrollings,vocabulary_size)
+valid_batch_input, valid_target_batch  = batch_generator(valid_1hot,batch_size,num_unrollings,vocabulary_size)
 
-
+print 1 + 1
 #
 # # Make and pickle validation batches
 # validx, validy = batch_generator(valid_1hot,batch_size,num_unrollings) # batch_size = 5, num_unrollings = 10 (this should match lstm file )
