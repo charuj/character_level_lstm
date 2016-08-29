@@ -19,7 +19,7 @@ The parameters used in this model:
 
 - learning_rate - the initial value of the learning rate
 - num_layers - the number of LSTM layers
-- num_steps - the number of unrolled steps of LSTM
+- num_unrollings - the number of unrolled steps of LSTM
 - hidden_size - the number of LSTM units
 - max_epoch - the number of epochs trained with the initial learning rate
 - keep_prob - the probability of keeping weights in the dropout layer. **THIS LSTM USES DROPUT!**
@@ -41,15 +41,15 @@ training_iters=100000
 
 class model():
     def __init__(self, config, is_training):
-        self.batch_size= batch_size= config.num_batches
-        self.num_steps= num_steps= config.num_steps
+        self.batch_size= batch_size= config.batch_size
+        self.num_unrollings= num_unrollings= config.num_unrollings
         hidden_size= config.hidden_size
         vocab_size= config.vocab_size
 
 
         # Create placeholders for inputs and targets
-        self.input_data= tf.placeholder(tf.int32,[batch_size, num_steps])
-        self.targets = tf.placeholder(tf.float32,[batch_size,num_steps])
+        self.input_data= tf.placeholder(tf.float32,[vocab_size, num_unrollings, batch_size])
+        self.targets = tf.placeholder(tf.float32,[vocab_size, num_unrollings , batch_size ])
 
         # Create multi-layer LSTM cell
         lstm_cell= tf.nn.rnn_cell.BasicLSTMCell(hidden_size) # using default forget_bias=1.0
@@ -78,13 +78,13 @@ class model():
 
             # Create a variable named "biases". Initialize to value of 0
             biases = tf.get_variable('biases', vocab_size, initializer=tf.constant_initializer(0.0))
-
-            # Character IDs will be embedded into a dense vector representation before being fed into the LSTM
-            # The embedding matrix 'embedding' is a tensor of shape [vocab_size, embedding size]
-            embedding = tf.get_variable("embedding", [vocab_size, hidden_size])
-            inputs = tf.nn.embedding_lookup(embedding, self.input_data) #Character embeddings, where input_data =character IDs
-
-            inputs = [tf.squeeze(inputs, [1]) for inputs in tf.split(1, num_steps, inputs)]  # build unrolled LSTM
+            #
+            # # Character IDs will be embedded into a dense vector representation before being fed into the LSTM
+            # # The embedding matrix 'embedding' is a tensor of shape [vocab_size, embedding size]
+            # embedding = tf.get_variable("embedding", [vocab_size, hidden_size])
+            # inputs = tf.nn.embedding_lookup(embedding, self.input_data) #Character embeddings, where input_data =character IDs
+            inputs= self.input_data
+            inputs = [tf.squeeze(inputs, [1]) for inputs in tf.split(1, num_unrollings, inputs)]  # build unrolled LSTM
             # if is_training and config.keep_prob <1:
             #
             #     for i in range (len(inputs)):
@@ -118,24 +118,24 @@ class config(object):
     init_scale = 0.1
     learning_rate = 1.0
     num_layers = 2
-    num_steps = 10
     hidden_size = 200
     keep_prob = 0.5
     display_step= 10
-    num_batches=5
-    num_unrollings = 10
+    batch_size=3
+    num_unrollings = 9
     #num_epochs= process_text_lstm.num_epochs
-    vocab_size = len(process_text_lstm.vocabulary) + 1
+    vocab_size = process_text_lstm.vocabulary_size
 
 
 # Loading the pickle data
 
-trainx = pickle.load( open( "trainx.p", "rb" ) )
-trainy = pickle.load( open( "trainy.p", "rb" ) )
+trainx = pickle.load( open( "train_input_stacked.p", "rb" ) )
+trainy = pickle.load( open( "train_target_stacked.p", "rb" ) )
 
 
-validx = pickle.load( open( "validx.p", "rb" ) )
-validy = pickle.load( open( "validy.p", "rb" ) )
+validx = pickle.load( open( "valid_input_stacked.p", "rb" ) )
+
+validy = pickle.load( open( "valid_input_stacked.p", "rb" ) )
 
 
 def main(config, model, trainx, trainy, validx, validy):
@@ -151,12 +151,10 @@ def main(config, model, trainx, trainy, validx, validy):
         step=1
         for i in range (num_epochs):
             state= model.initial_state.eval() #TODO: need to "instantiate" classes as objects before you use their functions like this, unless they are "static" functions
-            for j in range(config.num_batches):
-                # the data is already shaped to account for batches.
-                # data is in the shape [num_batches, num_unrollings]
-                # therefore, loop over the rows of the input and target matrices
-                x = trainx[j, :] #TODO: Check if x is actually one "batch" of data (same for y)
-                y= trainy[j,:]
+            for j in range(trainx.shape[2]//config.batch_size): # number of batches, feed a new batch every loop
+
+                x = trainx[:,:-1, j*config.batch_size: (j+1)*config.batch_size] #TODO: Check if x is actually one "batch" of data (same for y)
+                y= trainy[:,1: , j*config.batch_size: (j+1)*config.batch_size]
                 feed = {model.input_data: x, model.targets:y, model.initial_state:state}
                 train_loss, state, _, accuracy = sess.run([model.loss, model.final_state, model.optimizer, model.accuracy],feed_dict=feed )
                 if step % config.display_step ==0:
@@ -175,13 +173,6 @@ configuration= config()
 lstmmodel = model(configuration, is_training= True)
 main(config, model, trainx, trainy, validx, validy)
 
-
-
-
-
-# TODO: change data (make one hot encoding instead of char2id )
-# TODO: change numpy (outside of graph, feed_dict) into one hot, and graph (inputs and targets placeholders)
-# dimension of data will now be 5 x 69 x 10
 
 
 
