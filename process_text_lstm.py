@@ -116,7 +116,7 @@ def batch_generator(data_1hot, batch_size, num_unrollings, vocabulary_size):
     target_stack = []
 
     # Make a list of arrays for the inputs and targets, where each element of the list is of dim vocab_size x num_unrollings
-    for i in range(batch_len):
+    for i in range(batch_len-1):
         input_array = data_1hot[:, i*num_unrollings: (i+1) * num_unrollings]
         input_stack.append(input_array)
 
@@ -147,25 +147,14 @@ pickle.dump(valid_1hot, open( "valid_1hot.p", "wb" ) )
 pickle.dump(train_1hot, open( "train_1hot.p", "wb" ) )
 
 
-valid_batch_input, valid_target_batch  = batch_generator(valid_1hot,batch_size,num_unrollings,vocabulary_size)
+valid_input_stacked, valid_target_stacked  = batch_generator(valid_1hot,batch_size,num_unrollings,vocabulary_size)
+pickle.dump(valid_input_stacked, open( "valid_input_stacked.p", "wb" ) )
+pickle.dump(valid_target_stacked , open( "valid_target_stacked.p", "wb" ) )
 
-print 1 + 1
-#
-# # Make and pickle validation batches
-# validx, validy = batch_generator(valid_1hot,batch_size,num_unrollings) # batch_size = 5, num_unrollings = 10 (this should match lstm file )
-# pickle.dump(validx, open( "validx.p", "wb" ) )
-# pickle.dump(validy, open( "validy.p", "wb" ) )
-#
-# # Make and pickle training batches
-# trainx, trainy= batch_generator(train_1hot,batch_size,num_unrollings)
-# pickle.dump(trainx, open( "trainx.p", "wb" ) )
-# pickle.dump(trainy, open( "trainy.p", "wb" ) )
-#
-#
-#
-
-
-
+# Make and pickle training batches
+train_input_stacked, train_target_stacked= batch_generator(train_1hot,batch_size,num_unrollings,vocabulary_size)
+pickle.dump(train_input_stacked, open( "train_input_stacked.p", "wb" ) )
+pickle.dump(train_target_stacked, open( "train_target_stacked.p", "wb" ) )
 
 
 #### APENDIX (CODE I NO LONGER NEED BUT WORKS) #####
